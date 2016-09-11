@@ -1,0 +1,45 @@
+<md-dialog aria-label="Routine detail">
+  <md-dialog-content class="dialog">
+    <md-input-container　layout="column">
+      <label>繰り返し</label>
+	    <md-select ng-model="routine.freq" aria-label="freq">
+        <md-optgroup label="繰り返し">
+          <md-option value="DAILY">毎日</md-option>
+          <md-option selected value="WEEKLY">毎週</md-option>
+          <md-option value="MONTHLY">毎月</md-option>
+          <md-option value="YEARLY">毎年</md-option>
+        </md-optgroup>
+      </md-select>
+    </md-input-container>
+    <md-input-container　layout="column">
+      <label>繰り返す間隔</label>
+    	<md-select ng-model="routine.interval" aria-label="interval">
+    	　<md-optgroup label="繰り返す間隔">
+    	  　<md-option selected value="1">1</md-option>
+    	  　<md-option value="2">2</md-option>
+    	　　<md-option value="3">3</md-option>
+    	  　<md-option value="4">4</md-option>
+    	  　<md-option value="5">5</md-option>
+    	 </md-optgroup>
+       </md-select>
+    </md-input-container>
+    <!-- <md-input-container　layout="column">
+      <label>曜日</label>
+      <md-select ng-model="routine.weekday" placeholder="曜日">
+        <md-optgroup label="曜日">
+          <md-option value="MO">月</md-option>
+          <md-option value="TU">火</md-option>
+          <md-option value="WE">水</md-option>
+          <md-option value="TH">木</md-option>
+          <md-option value="FR">金</md-option>
+          <md-option value="SA">土</md-option>
+          <md-option value="SU">日</md-option>
+        </md-optgroup>
+       </md-select>
+    </md-input-container> -->
+  <md-dialog-content>
+  <md-dialog-actions>
+    <md-button class="md-primary" ng-click="cancel()">キャンセル</md-button>
+    <md-button class="md-primary" ng-click="answer(routine)">完了</md-button>
+  </md-dialog-actions>
+</md-dialog>

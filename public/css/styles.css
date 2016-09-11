@@ -1,0 +1,98 @@
+html, body {
+  font-family: 'Roboto', 'Helvetica', sans-serif;
+}
+
+header {
+  background-color: #E91E63;
+}
+
+header div a, header div {
+  color: #FFFFFF;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+body {
+  line-height: 1.5;
+}
+
+h2 {
+  margin-top: 1em;
+  padding-top: 1em;
+}
+
+/* only index html */
+
+#taskForm {
+  margin-top: 3%;
+}
+
+#taskForm, #taskListbox {
+  padding: 0 5%;
+}
+
+#addButton {
+  background-color: #00695C;
+  color: white;
+  max-height: 40px;
+}
+
+.dialog {
+  padding: 5%;
+}
+
+.input_container {
+  margin-top: 26px;
+}
+
+.validationMessages {
+  font-size: 12px;
+  color: red;
+  text-align: center;
+}
+
+md-datepicker {
+  position: relative;
+  left: -16px;
+  top: -5px;
+}
+
+.md-datepicker-input-container {
+  margin-left: 0;
+}
+
+.md-datepicker-button .md-icon-button {
+  margin-right: 0;
+}
+
+.datepickerError {
+  margin-top: -5px;
+  padding-right: 7px;
+}
+
+.estimatedTimeError {
+  margin-top: -41px;
+}
+
+md-divider {
+  padding: 10px 0;
+}
+
+.taskCell {
+  min-width: 40%;
+  padding-left: 25px !important;
+}
+
+/* To hide google popup */
+iframe[src^="https://apis.google.com/u/0/_/widget/oauthflow/toast"] {
+  display: none;
+}
+
+md-dialog-content {
+  padding: 5%;
+}
+
+#calendar {
+  width: 80%;
+  margin: 0 auto;
+}

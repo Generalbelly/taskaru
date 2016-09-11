@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja" ng-app="myApp">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="業務の見える化プロジェクト">
+    <title>タスカル</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" type="text/css"/>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css"/>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.0.0/fullcalendar.min.css"/>
+    <link rel="stylesheet" media="print" href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.0.0/fullcalendar.print.css"/>
+    <link rel="stylesheet" href="bower_components/angular-material-data-table/dist/md-data-table.min.css"/>
+    <link rel="stylesheet" href="css/styles.css"/>
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/3.3.0/firebase.js"></script>
+    <script>
+      var config = {
+        apiKey: "AIzaSyDUCNyV3yxgmJNHgvvUHmSB7cmWTvq0DII",
+        authDomain: "taskaru-bf27a.firebaseapp.com",
+        databaseURL: "https://taskaru-bf27a.firebaseio.com",
+        storageBucket: "taskaru-bf27a.appspot.com",
+      };
+      firebase.initializeApp(config);
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timepicker/1.10.0/jquery.timepicker.min.js"></script>
+    <!-- Angular Material requires Angular.js Libraries -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-animate.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-aria.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-messages.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-route.js"></script>
+    <script src="https://code.angularjs.org/1.5.8/i18n/angular-locale_ja-jp.js"></script>
+    <!-- Angular Material Library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.js"></script>
+    <script src="bower_components/angular-material-data-table/dist/md-data-table.min.js"></script>
+    <script src="https://cdn.firebase.com/libs/angularfire/2.0.2/angularfire.min.js"></script>
+    <script src="https://apis.google.com/js/client.js"></script>
+    <script src="js/GoogleClientHelper.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/UserFactory.js"></script>
+    <script src="js/LoginController.js"></script>
+    <script src="js/TaskController.js"></script>
+    <script src="js/NavigationController.js"></script>
+    <script src="js/SettingController.js"></script>
+    <script src="js/moment.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.0.0/fullcalendar.min.js"></script>
+  </head>
+  <body>
+    <header layout="column" ng-controller="NavCtrl as nvm" ng-cloak ng-hide="nvm.currentPath === '#/' || nvm.currentPath === '/'">
+      <nav layout="row" hide-xs>
+        <div layout="row" layout-align="start center" flex layout-margin>
+          <div><a href="#" class="brand-logo">TASKARU</a></div>
+        </div>
+        <div layout="row" layout-align="end center" flex layout-margin>
+          <div><a href="#">タスク</a></div>
+          <md-menu>
+            <div aria-label="dropdown menu"><a ng-click="$mdOpenMenu($event)">{{nvm.username}}</a></div>
+            <md-menu-content>
+              <md-menu-item>
+                <div><a ng-click="nvm.settingClicked()">設定</a></div>
+              </md-menu-item>
+              <md-menu-item>
+                <div><a ng-click="nvm.signOut()">ログアウト</a></div>
+              </md-menu-item>
+            </md-menu-content>
+          </md-menu>
+          <!-- <div><a href="#">分析</a></div>
+          <div><a href="#">チーム</a></div> -->
+        </div>
+      </nav>
+    </header>
+    <ng-view></ng-view>
+  </body>
+</html>

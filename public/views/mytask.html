@@ -1,0 +1,147 @@
+<main layout="column">
+  <div>
+    <form name="taskForm" id="taskForm">
+      <div layout="column" layout-align="center none" layout-gt-sm="row" layout-margin>
+        <md-autocomplete flex-gt-sm="100" flex="20" required md-no-asterisk md-floating-label="タスク" md-input-name="selectedTaskname" md-selected-item="selectedTaskname" md-search-text="tSearchText" md-items="taskname in querySearch('tasknameList', tSearchText)" md-item-text="taskaname" md-min-length="0" md-select-on-match="true">
+          <md-item-template>
+            <span md-highlight-text="searchText">{{taskname}}</span>
+          </md-item-template>
+          <div ng-messages="taskForm.selectedTaskname.$error"　ng-if="taskForm.selectedTaskname.$touched">
+            <div ng-message="required">この項目は必須です</div>
+          </div>
+          <md-not-found>
+            <a ng-click="showPrompt(0, tSearchText)">新規追加</a>
+          </md-not-found>
+        </md-autocomplete>
+        <md-autocomplete flex-gt-sm="100" flex="20" required md-no-asterisk md-floating-label="プロジェクト" md-input-name="selectedProject" md-selected-item="selectedProject" md-search-text="pSearchText" md-items="project in querySearch('projectList', pSearchText)" md-item-text="project" md-min-length="0"　md-select-on-match="true">
+          <md-item-template>
+            <span md-highlight-text="searchText">{{project}}</span>
+          </md-item-template>
+          <div ng-messages="taskForm.selectedProject.$error"　ng-if="taskForm.selectedProject.$touched">
+            <div ng-message="required">この項目は必須です</div>
+          </div>
+          <md-not-found>
+            <a ng-click="showPrompt(1, pSearchText)">新規追加</a>
+          </md-not-found>
+        </md-autocomplete>
+        <div layout="column" flex-gt-sm="100" flex="10">
+          <md-input-container>
+            <input required md-no-asterisk name="estimated_time" id="estimated_time" placeholder="想定(h)" type="number" ng-model="estimated_time">
+          </md-input-container>
+          <div class="validationMessages estimatedTimeError" ng-messages="taskForm.estimated_time.$error" ng-show="taskForm.estimated_time.$touched">
+            <div ng-message="required">未入力です</div>
+          </div>
+        </div>
+        <div layout="column" flex-gt-sm="100" flex="10" class="input_container">
+          <md-datepicker required id="deadline" name="deadline" ng-model="deadline" md-placeholder="期日"></md-datepicker>
+          <div class="validationMessages datepickerError" ng-messages="taskForm.deadline.$error" ng-show="taskForm.deadline.$touched">
+            <div ng-message="valid">正しい形式の日付を入力してください</div>
+            <div ng-message="required">未入力です</div>
+          </div>
+        </div>
+        <md-input-container flex-gt-sm="100" flex="5" class="input_container">
+          <label>優先度</label>
+          <md-select id="priority" name="priority" ng-model="priority">
+          　<md-option value="high">今すぐ</md-option>
+          　<md-option value="middle">なる早</md-option>
+          　<md-option value="low">余裕あり</md-option>
+          </md-select>
+        </md-input-container>
+        <div layout="column" flex-gt-sm="100" flex="5" class="input_container">
+          <md-button id="addButton" class="md-raised" ng-click="addTask()">
+            追加
+          </md-button>
+          <!-- <md-switch ng-model="routineSwitch" ng-change="onRoutineChanged(routineSwitch)" aria-label="Switch">
+            ルーチン
+          </md-switch> -->
+        </div>
+      </div>
+    </form>
+  </div>
+  <md-divider></md-divider>
+  <div flex layout="row" layout-xs="column">
+    <div flex="10" hide-xs></div>
+    <md-table-container id="taskListbox" flex="80" flex-md="100" flex-xs="100">
+      <div ng-cloak>
+        <md-content>
+          <md-tabs md-dynamic-height md-border-bottom>
+            <md-tab label="未完了タスク">
+              <md-content class="md-padding">
+                <table md-table>
+                  <thead md-head>
+                    <th md-column></th>
+                    <th md-column class="taskCell">タスク</th>
+                    <th md-column>プロジェクト</th>
+                    <th md-column md-numeric>想定時間</th>
+                    <th md-column>期日</th>
+                    <th md-column></th>
+                  </thead>
+                  <tbody md-body>
+                    <tr ng-repeat="item in taskList | orderBy: 'item.deadline'">
+                      <td md-cell><md-checkbox ng-model="isChecked" aria-label="Finished?"></md-checkbox></td>
+                      <td md-cell class="tableCell">{{ item.taskname }}</td>
+                      <td md-cell>{{ item.project }}</td>
+                      <td md-cell>{{ item.estimated_time }}</td>
+                      <td md-cell>{{ item.deadline }}</td>
+                      <td md-cell layout="row" layout-align="center center">
+                        <md-button ng-click="compButtonClicked(item)">完了</md-button>
+                        <md-button ng-if="checkDate(item.deadline)" class="md-warn" ng-click="deleteButtonClicked('incomp', item.$id)">削除</md-button>
+                        <md-button ng-if="checkDate(item.deadline)==false" class="md-primary" ng-click="readdButtonClicked(item)">再追加</md-button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </md-content>
+            </md-tab>
+              <md-tab label="完了済みタスク">
+                <md-content class="md-padding">
+                  <table md-table>
+                    <thead md-head>
+                      <th flex md-column class="taskCell">タスク</th>
+                      <th flex md-column>プロジェクト</th>
+                      <th flex md-column md-numeric>想定時間</th>
+                      <th flex md-column md-numeric>完了時間</th>
+                      <th flex md-column>差異</th>
+                      <th flex md-column></th>
+                    </thead>
+                  <tbody md-body>
+                    <tr ng-repeat="item in compTaskList">
+                      <td md-cell class="tableCell">{{ item.taskname }}</td>
+                      <td md-cell>{{ item.project }}</td>
+                      <td md-cell>{{ item.estimated_time }}</td>
+                      <td md-cell>{{ item.completion_time}}</td>
+                      <td md-cell>{{ item.estimated_time - item.completion_time }}</td>
+                      <td md-cell><md-button class="md-warn" ng-click="deleteButtonClicked('comp', item.$id)">削除</md-button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </md-content>
+            </md-tab>
+              <md-tab label="ルーチン">
+                <md-content class="md-padding">
+                  <table md-table>
+                    <thead md-head>
+                      <th flex md-column class="taskCell">タスク</th>
+                      <th flex md-column>プロジェクト</th>
+                      <th flex md-column md-numeric>想定時間</th>
+                      <th flex md-column></th>
+                    </thead>
+                  <tbody md-body>
+                    <tr ng-repeat="item in routineList">
+                      <td md-cell class="tableCell">{{ item.taskname }}</td>
+                      <td md-cell>{{ item.project }}</td>
+                      <td md-cell>{{ item.estimated_time }}</td>
+                      <td md-cell><md-button class="md-warn" ng-click="deleteButtonClicked('routine', item.$id)">削除</md-button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </md-content>
+            </md-tab>
+          </md-tabs>
+        </md-content>
+      </div>
+    </md-table-container>
+    <div flex="10" hide-xs></div>
+  </div>
+  <div id="calendar"></div>
+</main>

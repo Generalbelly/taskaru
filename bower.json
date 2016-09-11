@@ -1,0 +1,22 @@
+{
+  "name": "My application",
+  "authors": [
+    "Nobuyoshi Shimmen <nobuyoshi.shimmen@gmail.com>"
+  ],
+  "description": "for taskaru project",
+  "main": "index.html",
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular-material-data-table": "^0.10.9",
+    "moment": "^2.14.1"
+  }
+}

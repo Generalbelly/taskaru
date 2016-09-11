@@ -1,0 +1,28 @@
+<md-dialog aria-label="Readding a task">
+  <md-dialog-content class="dialog">
+    <form name="readdedtaskForm" layout="column">
+      <md-input-container>
+        <input name="estimated_time" id="estimated_time" placeholder="想定時間（分）" type="number" ng-model="readdedTask.estimated_time">
+      </md-input-container>
+      <md-input-container>
+        <label>優先度</label>
+        <md-select id="priority" name="priority" ng-model="readdedTask.priority">
+        　<md-option value="high">高</md-option>
+        　<md-option value="middle">中</md-option>
+        　<md-option value="low">低</md-option>
+        </md-select>
+      </md-input-container>
+      <div layout="column" class="input_container">
+        <md-datepicker required id="deadline" name="deadline" ng-model="readdedTask.deadline" md-placeholder="期日"></md-datepicker>
+        <div class="validationMessages datepickerError" ng-messages="readdedtaskForm.deadline.$error" ng-show="readdedtaskForm.deadline.$touched">
+          <div ng-message="valid">正しい形式の日付を入力してください</div>
+          <div ng-message="required">未入力です</div>
+        </div>
+      </div>
+    <md-dialog-content>
+    <md-dialog-actions>
+      <md-button class="md-primary" ng-click="cancel()">キャンセル</md-button>
+      <md-button class="md-primary" ng-click="answer(readdedTask)">再追加</md-button>
+    </md-dialog-actions>
+  </form>
+</md-dialog>

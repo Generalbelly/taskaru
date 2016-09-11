@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="業務の見える化プロジェクト">
+    <title>タスカル</title>
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.7/css/materialize.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+  </head>
+  <body>
+    <header>
+      <nav>
+        <div class="nav-wrapper">
+          <a href="#" class="brand-logo">Logo</a>
+          <ul id="nav-mobile" class="right hide-on-med-and-down">
+            <li><a href="index.html">タスク</a></li>
+            <li><a href="badges.html">分析</a></li>
+            <li><a href="collapsible.html">チーム</a></li>
+            <li><a href="collapsible.html">設定</a></li>
+          </ul>
+        </div>
+      </nav>
+    </header>
+    <main class="container">
+      <div class="row">
+      </div>
+      <div class="row">
+      </div>
+    </main>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.7/js/materialize.min.js"></script>
+  </body>
+
+  <script src="https://www.gstatic.com/firebasejs/3.2.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/3.2.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/3.2.0/firebase-database.js"></script>
+  <!-- Leave out Storage -->
+  <!-- <script src="https://www.gstatic.com/firebasejs/3.1.0/firebase-storage.js"></script> -->
+  <script>
+    // Initialize Firebase
+    var app = angular.module("app", ["firebase"]);
+    app.config(function() {
+      var config = {
+        apiKey: "AIzaSyDUCNyV3yxgmJNHgvvUHmSB7cmWTvq0DII",
+        authDomain: "taskaru-bf27a.firebaseapp.com",
+        databaseURL: "https://taskaru-bf27a.firebaseio.com",
+        storageBucket: "taskaru-bf27a.appspot.com",
+      };
+      firebase.initializeApp(config);
+    });
+  </script>
+ <!-- AngularJS -->
+ <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+ <!-- AngularFire -->
+ <script src="https://cdn.firebase.com/libs/angularfire/2.0.1/angularfire.min.js"></script>
+</html>

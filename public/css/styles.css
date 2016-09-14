@@ -78,11 +78,6 @@ md-divider {
   padding: 10px 0;
 }
 
-.taskCell {
-  min-width: 40%;
-  padding-left: 25px !important;
-}
-
 /* To hide google popup */
 iframe[src^="https://apis.google.com/u/0/_/widget/oauthflow/toast"] {
   display: none;
@@ -93,6 +88,7 @@ md-dialog-content {
 }
 
 #calendar {
-  width: 80%;
-  margin: 0 auto;
+  width: 90%;
+  height: auto;
+  margin-right: 5%;
 }

@@ -181,11 +181,11 @@ function createEvents(title, startingTime, requiredTime, routine) {
       // 'description': "",
       "start": {
         "dateTime": startingTime,
-        "timeZone": "Japan"
+        "timeZone": "Asia/Tokyo"
       },
       "end": {
         "dateTime": endingTime,
-        "timeZone": "Japan"
+        "timeZone": "Asia/Tokyo"
       }
     };
     if (routine !== null){
@@ -208,18 +208,46 @@ function createEvents(title, startingTime, requiredTime, routine) {
   })
 }
 
+var nextPageToken = null;
+var nextSyncToken = null;
+var now = null;
+
 function listUpcomingEvents() {
   return new Promise(function (resolve, reject) {
-    var request = gapi.client.calendar.events.list({
+    now = (new Date()).toISOString();
+    var parameters = {
        'calendarId': 'primary',
-       'timeMin': (new Date()).toISOString(),
+       'timeMin': now,
        'showDeleted': false,
        'singleEvents': true,
        'orderBy': 'startTime'
-    });
+    };
+    console.log(nextPageToken);
+    if (nextPageToken != null) {
+      parameters.pageToken = nextPageToken;
+      console.log("pageToken is set");
+      console.log(parameters);
+    } else if (nextSyncToken != null) {
+      parameters.syncToken = nextSyncToken;
+    }
+    var request = gapi.client.calendar.events.list(parameters);
     request.execute(function(resp) {
-      var events = resp.items;
       var eventList = [];
+      console.log(resp);
+      console.log(resp.nextPageToken);
+      if (resp.nextPageToken) {
+        nextPageToken = resp.nextPageToken;
+        console.log("set pagetoken");
+      } else if (nextPageToken != null) {
+        nextPageToken = null;
+      }
+      if (resp.syncToken) {
+        nextSyncToken = resp.syncToken;
+      } else if (nextSyncToken != null) {
+        nextSyncToken = null;
+      }
+      var events = resp.items;
+      console.log(events);
       if (events.length > 0) {
         for (i = 0; i < events.length; i++) {
           var item = {};
@@ -237,47 +265,42 @@ function listUpcomingEvents() {
           item.title = event.summary;
           item.id = event.id;
           eventList.push(item);
-           // some events fetched
         }
-        resolve(eventList);
-      } else {
-        resolve(eventList);
-         // no coming events.
       }
+      resolve(eventList);
     });
   });
 }
 
-function updateEvent(title, startingTime, requiredTime, routine, eventId) {
+function updateEvent(ev) {
   return new Promise(function (resolve, reject) {
-    var endingTime = (new Date(startingTime.getTime() + (requiredTime * 60000))).toISOString();
-    console.log(startingTime + "," + endingTime);
     var event = {
-      "summary": title,
-      // 'description': "",
+      // "summary": title,
+      // // 'description': "",
+      "id": ev.id,
       "start": {
-        "dateTime": startingTime,
-        "timeZone": "Japan"
+        "dateTime": ev.start.toISOString(),
+        "timeZone": "Asia/Tokyo"
       },
       "end": {
-        "dateTime": endingTime,
-        "timeZone": "Japan"
+        "dateTime": ev.end.toISOString(),
+        "timeZone": "Asia/Tokyo"
       }
     };
-    if (title !== null){
-      console.log("come33");
-      event.summary = title;
-    }
-    if (routine !== null){
-      console.log("come34");
-      event.recurrence = [
-        "RRULE:FREQ=" + routine.freq + ";INTERVAL=" + routine.interval // + ";WKST=" + routine.weekday
-      ];
-    }
-    console.log(event);
-    var request = gapi.client.calendar.events.update({
+    // if (title !== null){
+    //   console.log("come33");
+    //   event.summary = title;
+    // }
+    // if (routine !== null){
+    //   console.log("come34");
+    //   event.recurrence = [
+    //     "RRULE:FREQ=" + routine.freq + ";INTERVAL=" + routine.interval // + ";WKST=" + routine.weekday
+    //   ];
+    // }
+    console.log(ev.id);
+    var request = gapi.client.calendar.events.patch({
        "calendarId": "primary",
-       "eventId": eventId,
+       "eventId": ev.id,
        "resource": event
     });
 

@@ -10,10 +10,11 @@
         "$firebaseArray",
         "sharedService",
         "$mdDialog",
+        "$mdToast",
         "currentAuth"
     ];
 
-    function taskController($scope, $firebaseObject, $firebaseArray, sharedService, $mdDialog, currentAuth) {
+    function taskController($scope, $firebaseObject, $firebaseArray, sharedService, $mdDialog, $mdToast, currentAuth) {
       $scope.selectedTaskname = null;
       $scope.selectedProject = null;
       $scope.estimated_time = null;
@@ -22,13 +23,13 @@
       $scope.routine = null;
       $scope.addTask = addTask;
       $scope.showPrompt = showPrompt;
-      $scope.compButtonClicked = compButtonClicked;
       $scope.onRoutineChanged = onRoutineChanged;
       $scope.deleteButtonClicked = deleteButtonClicked;
       $scope.querySearch = querySearch;
       $scope.checkDate = checkDate;
       $scope.readdButtonClicked = readdButtonClicked;
-
+      $scope.taskChecked = taskChecked;
+      $scope.rowSelected = [];
 
       var tasknameList = [];
       var projectList = [];
@@ -40,14 +41,19 @@
         fetchCompleteTasks();
         fetchRoutines();
         checkWorkingHours();
-        createCalendar();
+        createCalendar(true);
       };
 
-      function createCalendar() {
+      function createCalendar(firsttime) {
         listUpcomingEvents()
           .then(function(list){
+            console.log("new events");
             if (list.length > 0) {
-              setEventsInFullCalendar(list);
+              if (firsttime) {
+                setEventsInFullCalendar(list);
+              } else {
+                updateFullCalendar(list)
+              }
             }
           })
           .catch(function(e){
@@ -57,7 +63,11 @@
               .then(function(list){
                 console.log("success");
                 if (list.length > 0) {
-                  setEventsInFullCalendar(list);
+                  if (firsttime) {
+                    setEventsInFullCalendar(list);
+                  } else {
+                    updateFullCalendar(list)
+                  }
                 }
               })
               .catch(function(e){
@@ -68,19 +78,53 @@
       }
 
       function setEventsInFullCalendar(list) {
-        console.log(list);
         $("#calendar").fullCalendar({
-          header: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'month,agendaWeek,agendaDay,listWeek'
+          customButtons: {
+            refreshButton: {
+              text: "更新",
+              click: function() {
+                createCalendar(false);
+              }
+            }
           },
+          header: {
+            left: "prev,next today",
+            center: "title",
+            right: "month,agendaWeek,agendaDay,listWeek refreshButton"
+          },
+          firstDay: 1,
+          defaultView: "agendaWeek",
           navLinks: true, // can click day/week names to navigate views
 			    editable: true,
           events: {
             events: list
-          }
+          },
+          eventDrop: eventChanged,
+          eventResize: eventChanged
         })
+      }
+
+      function updateFullCalendar(list) {
+        $("#calendar").fullCalendar("addEventSource", list);
+      }
+
+      function eventChanged(event) {
+        updateEvent(event)
+          .then(function(event){
+            console.log(event.id + "changed");
+          })
+          .catch(function(e){
+            console.log("あーあ");
+            checkAuth().then(function(result){
+              updateEvent(event)
+                .then(function(event){
+                  console.log(event.id + "changed");
+                })
+                .catch(function(e){
+                  console.log("errrr" + e);
+                })
+            });
+          })
       }
 
       function checkWorkingHours() {
@@ -123,15 +167,14 @@
         console.log("endingTime is " + endingTime);
       }
 
-      var today = (new Date()).getTime();
+      var today = new Date();
       function checkDate(date) {
-        var td = (new Date(date)).getTime();
-        console.log("compare" + td + "&" + today);
-        if ( td >= today ) {
-          console.log("true1");
+        var td = new Date(date);
+        var diff = (today - td) / (1000 * 60 * 60);
+        console.log(diff);
+        if ( diff <= 24 ) {
           return true;
         } else {
-          console.log("false");
           return false;
         }
       }
@@ -202,7 +245,7 @@
             controller: DialogCtrl
           }).then(function(answer) {
             console.log(answer);
-            // you need handle errors later.
+            // need handle errors later.
             $scope.selectedTaskname = item.taskname;
             $scope.selectedProject = item.project;
             $scope.estimated_time = answer.estimated_time;
@@ -216,23 +259,28 @@
           });
       }
 
-      function compButtonClicked(task) {
-        var taskList = $scope.taskList;
-        var item = taskList[taskList.$indexFor(task.$id)];
-        var addModal = $mdDialog.prompt()
-          .title("タスクの完了時間")
-          .textContent("タスクにかかった実際の時間（分）を入力してください")
-          .placeholder("30")
-          .ok("完了")
-          .cancel("キャンセル");
-        $mdDialog.show(addModal).then(function(result) {
-          taskList.$remove(item).then(function(ref) {
-            task.completion_time = Number(result);
-            $scope.compTaskList.$add(task).then(function(){console.log("COMPLETE");});
+      function taskChecked(){
+        var task = $scope.rowSelected[0];
+        var taskId = task.$id;
+        $scope.taskList.$remove(task).then(function(ref) {
+          var toast = $mdToast.simple()
+            .textContent("完了にしました")
+            .action("元に戻す")
+            .highlightAction(true);
+          $mdToast.show(toast).then(function(response) {
+            if ( response == "ok" ) {
+              firebase.database().ref().child(sharedService.getTaskPath() + taskId).set({
+                calendarId: task.calendarId,
+                deadline: task.deadline,
+                estimated_time: task.estimated_time,
+                priority: task.priority,
+                project: task.project,
+                taskname: task.taskname
+              });
+            } else {
+              $scope.compTaskList.$add(task).then(function(){console.log("COMPLETE");});
+            }
           });
-        }, function() {
-          console.log("you cancelled");
-          console.log(task.$id);
         });
       }
 
@@ -298,7 +346,7 @@
         var taskData = {
           "taskname": $scope.selectedTaskname,
           "project": $scope.selectedProject,
-          "estimated_time": $scope.estimated_time * 60,
+          "estimated_time": $scope.estimated_time,
           "deadline": $scope.deadline.toLocaleDateString(),
           "priority": $scope.priority
         };
@@ -311,8 +359,7 @@
         console.log(taskData);
         taskList.$add(taskData).then(function(ref) {
           var id = ref.key;
-          console.log(id);
-          //createTheEventInCal(id, taskData, recurrence, readded)
+          createTheEventInCal(id, taskData, recurrence, readded)
         });
       }
 
@@ -391,6 +438,7 @@
             });
           }
           clearTaskInput();
+          createCalendar(false);
       }
 
       function clearTaskInput() {

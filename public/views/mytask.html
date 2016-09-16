@@ -73,7 +73,8 @@
                   </thead>
                   <tbody md-body>
                     <tr md-row md-select="item" md-on-select="taskChecked" ng-repeat="item in taskList | orderBy: 'deadline'">
-                      <td md-cell><span style="font-size: 0.8em;">{{ item.project }}</span><br>{{ item.taskname }}</span></td>
+                      <td md-cell>
+                        <span style="font-size: 0.8em;">{{ item.project }}</span><br>{{ item.taskname }}</span></td>
                       <td md-cell>
                         {{ item.deadline }}
                         <md-button ng-if="checkDate(item.deadline)" class="md-warn" ng-click="deleteButtonClicked('incomp', item.$id)">削除</md-button>
@@ -99,8 +100,9 @@
                     </thead>
                   <tbody md-body>
                     <tr md-row ng-repeat="item in compTaskList">
-                      <td md-cell>{{ item.taskname }}</td>
-                      <td md-cell>{{ item.project }}</td>
+                      <td md-cell>
+                        <span style="font-size: 0.8em;">{{ item.project }}</span><br>{{ item.taskname }}</span></td>
+                      <td md-cell>
                       <td md-cell>{{ item.estimated_time }}</td>
                       <td md-cell>{{ item.completion_time}}</td>
                       <td md-cell>{{ item.estimated_time - item.completion_time }}</td>
@@ -123,8 +125,9 @@
                     </thead>
                   <tbody md-body>
                     <tr md-row ng-repeat="item in routineList">
-                      <td md-cell>{{ item.taskname }}</td>
-                      <td md-cell>{{ item.project }}</td>
+                      <td md-cell>
+                        <span style="font-size: 0.8em;">{{ item.project }}</span><br>{{ item.taskname }}</span></td>
+                      <td md-cell>
                       <td md-cell>{{ item.estimated_time }}</td>
                       <td md-cell><md-button class="md-warn" ng-click="deleteButtonClicked('routine', item.$id)">削除</md-button></td>
                     </tr>

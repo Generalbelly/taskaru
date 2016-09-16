@@ -1,6 +1,10 @@
 var tokenSet = false;
+var currentTime = new Date();
 var startingTime= " 9:30:00";
 var endingTime = " 18:00:00";
+var nextPageToken = null;
+var nextSyncToken = null;
+var min = new Date(currentTime.setDate(currentTime.getDate() - 30)).toISOString();
 
 function loadClientlib(token) {
     gapi.auth.setToken({
@@ -39,7 +43,7 @@ function registerTaskInCalendar(timeMax, timeMin, requiredTime, title, routine) 
       "timeMin": timeMin,
       "timeMax": timeMax,
       "items": [{"id": "primary"}],
-      "timeZone": "Japan"
+      "timeZone": "Asia/Tokyo"
     });
 
     request.execute(function(resp) {
@@ -60,25 +64,36 @@ function registerTaskInCalendar(timeMax, timeMin, requiredTime, title, routine) 
       if (typeof errors == "undefined") {
         console.log("come");
         if (events.length == 0) {
-          var currentTime = new Date();
-          if (currentTime > new Date(currentTime.toLocaleDateString() + startingTime) && currentTime < new Date(currentTime.toLocaleDateString() + endingTime)) {
+          var workStartingTime = new Date(currentTime.toLocaleDateString() + startingTime);
+          var workEndingTime =  new Date(currentTime.toLocaleDateString() + endingTime);
+          if (currentTime >= workStartingTime && currentTime <= workEndingTime) {
             console.log("It's still working hours");
             taskStartingTime = currentTime;
           } else {
-            taskStartingTime = new Date(new Date(currentTime.setDate(currentTime.getDate())).toLocaleDateString() + startingTime);
+            console.log("It's not working hours anymore");
+            if (currentTime < workStartingTime){
+              console.log("morning");
+              taskStartingTime = new Date(new Date(currentTime.setDate(currentTime.getDate())).toLocaleDateString() + startingTime);
+            } else {
+              console.log("evening and do it tomorrow");
+              taskStartingTime = new Date(new Date(currentTime.setDate(currentTime.getDate() + 1)).toLocaleDateString() + startingTime);
+            }
           }
           createEvents(title, taskStartingTime, requiredTime, routine).then(function(result){
             resolve(result);
           });
         } else {
+          var loopAgain = false;
           for (i = 0; i < events.length; i++) {
             var event = events[i];
             eStartingTime = new Date(event.start);
-            eEndingTime = new Date(event.end);
+            if (!loopAgain) {
+              eEndingTime = new Date(event.end);
+            }
             console.log("eventEndingTime is ..." + eEndingTime);
             eStartingTimeString = eStartingTime.toLocaleDateString();
             eEndingTimeString = eEndingTime.toLocaleDateString();
-            if (lastCheckedDate == null || lastCheckedDate !== eStartingTimeString) {
+            if (lastCheckedDate === null || lastCheckedDate !== eStartingTimeString) {
               console.log(lastCheckedDate + " is not equal to " + eStartingTimeString);
               wStartingTime = new Date(eStartingTimeString + startingTime);
               wEndingTime = new Date(eEndingTimeString + endingTime);
@@ -91,7 +106,10 @@ function registerTaskInCalendar(timeMax, timeMin, requiredTime, title, routine) 
               break;
             } else {
               console.log("Not Enough Time. So Let's loop through again.");
-              if (eEndingTime < wEndingTime) { wStartingTime = eEndingTime; }
+              if (eEndingTime < wEndingTime) {
+                wStartingTime = eEndingTime;
+                loopAgain = true;
+              }
             }
           }
           if (!freeTimeFound) {
@@ -208,29 +226,43 @@ function createEvents(title, startingTime, requiredTime, routine) {
   })
 }
 
-var nextPageToken = null;
-var nextSyncToken = null;
-var now = null;
+function deleteEvent(eventId) {
+  return new Promise(function (resolve, reject) {
+    var request = gapi.client.calendar.events.delete({
+      "calendarId": "primary",
+      "eventId": eventId
+    });
+    request.execute(function(event) {
+      console.log("The event got deleted");
+      resolve(event);
+    });
+  })
+}
+
+var lastTimeParams = {};
 
 function listUpcomingEvents() {
   return new Promise(function (resolve, reject) {
-    now = (new Date()).toISOString();
+    var params = {};
     var parameters = {
        'calendarId': 'primary',
-       'timeMin': now,
+       'timeMin': min,
        'showDeleted': false,
        'singleEvents': true,
        'orderBy': 'startTime'
     };
-    console.log(nextPageToken);
-    if (nextPageToken != null) {
-      parameters.pageToken = nextPageToken;
-      console.log("pageToken is set");
-      console.log(parameters);
-    } else if (nextSyncToken != null) {
-      parameters.syncToken = nextSyncToken;
-    }
+    // params = parameters;
+    // if (nextPageToken != null) {
+    //   lastTimeParams.pageToken = nextPageToken;
+    //   params = lastTimeParams;
+    //   console.log("pageToken is set");
+    //   console.log(parameters);
+    // } else if (nextSyncToken != null) {
+    //   lastTimeParams.syncToken = nextSyncToken;
+    //   params = lastTimeParams;
+    // }
     var request = gapi.client.calendar.events.list(parameters);
+    lastTimeParams = parameters;
     request.execute(function(resp) {
       var eventList = [];
       console.log(resp);
@@ -242,6 +274,7 @@ function listUpcomingEvents() {
         nextPageToken = null;
       }
       if (resp.syncToken) {
+        console.log("syncToken is set");
         nextSyncToken = resp.syncToken;
       } else if (nextSyncToken != null) {
         nextSyncToken = null;
@@ -259,6 +292,7 @@ function listUpcomingEvents() {
             allday = true;
           }
           item.start = when;
+          console.log(when);
           if (!allday) {
             item.end = event.end.dateTime;
           }

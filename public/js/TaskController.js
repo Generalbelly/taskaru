@@ -78,6 +78,7 @@
       }
 
       function setEventsInFullCalendar(list) {
+        console.log("firsttie events set");
         $("#calendar").fullCalendar({
           customButtons: {
             refreshButton: {
@@ -105,6 +106,8 @@
       }
 
       function updateFullCalendar(list) {
+        console.log("updated");
+        $("#calendar").fullCalendar('removeEventSources');
         $("#calendar").fullCalendar("addEventSource", list);
       }
 
@@ -171,7 +174,6 @@
       function checkDate(date) {
         var td = new Date(date);
         var diff = (today - td) / (1000 * 60 * 60);
-        console.log(diff);
         if ( diff <= 24 ) {
           return true;
         } else {
@@ -303,6 +305,7 @@
         $mdDialog.show(confirm).then(function(result) {
           taskList.$remove(item).then(function(ref) {
             console.log("DELETED");
+            deleteEvent(item.calendarId);
           });
         }, function() {
           console.log("you cancelled");
@@ -430,7 +433,7 @@
       function calndarRegistrationDidsucceed(result, taskData, readded){
           openMessageModal("カレンダーへの登録完了", taskData.project + "の" + taskData.taskname + "を " + new Date(result.start.dateTime).toLocaleString() + " - " + new Date(result.end.dateTime).toLocaleString() + " に設定しました。");
           console.log(readded);
-          if(readded != ""){
+          if(typeof readded != undefined){
             var taskList = $scope.taskList;
             var item = taskList[taskList.$indexFor(readded)];
             taskList.$remove(item).then(function(ref) {

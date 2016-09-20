@@ -8,6 +8,7 @@
     sharedService.$inject = ["$firebaseAuth", "$firebaseObject"];
     function sharedService($firebaseAuth, $firebaseObject) {
         var auth = $firebaseAuth();
+        var calendarConnected = false;
         auth.$onAuthStateChanged(checkUserStatus);
         var sharedService = {
             getTaskPath: getTaskPath,
@@ -72,7 +73,6 @@
         function checkUserStatus(firebaseUser) {
             if (firebaseUser) {
                 console.log("Signed in as:", firebaseUser.uid);
-                if (!tokenSet) {
                     firebase.auth().getRedirectResult().then(function(result) {
                         if (result.credential) {
                             var accessToken = result.credential.accessToken;
@@ -93,7 +93,6 @@
                         var credential = error.credential;
                         console.log(error);
                     });
-                }
             } else {
                 console.log("Signed out");
             }

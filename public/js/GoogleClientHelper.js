@@ -1,30 +1,33 @@
-var tokenSet = false;
-var currentTime = new Date();
 var startingTime= " 9:30:00";
 var endingTime = " 18:00:00";
 var nextPageToken = null;
 var nextSyncToken = null;
-var min = new Date(currentTime.setDate(currentTime.getDate() - 30)).toISOString();
+var eventList = [];
+var deleteList = [];
 
 function loadClientlib(token) {
     gapi.auth.setToken({
-        access_token: token
+      access_token: token
     });
     loadCalendarApi();
 }
 
 function checkAuth() {
   return new Promise(function(resolve, reject){
-    gapi.auth.authorize({
-        'client_id': "757836281219-q3rh5p8hro63hb0oglhfasr6f2hvfndc.apps.googleusercontent.com",
-        'scope': "https://www.googleapis.com/auth/calendar",
-        'immediate': true
-    }, function(){
-        loadCalendarApi().then(function(){
-            console.log("AccessToken got refreshed and calendar api got loaded");
-            resolve("success");
-        });
-    });
+    if (gapi.auth){
+      gapi.auth.authorize({
+          'client_id': "757836281219-q3rh5p8hro63hb0oglhfasr6f2hvfndc.apps.googleusercontent.com",
+          'scope': "https://www.googleapis.com/auth/calendar",
+          'immediate': true
+      }, function(){
+          loadCalendarApi().then(function(){
+              console.log("AccessToken got refreshed and calendar api got loaded");
+              resolve("success");
+          });
+      });
+    } else {
+      reject("notReady")
+    }
   })
 }
 
@@ -37,7 +40,6 @@ function loadCalendarApi() {
 }
 
 function registerTaskInCalendar(timeMax, timeMin, requiredTime, title, routine) {
-  console.log(routine);
   return new Promise(function(resolve, reject) {
     var request = gapi.client.calendar.freebusy.query({
       "timeMin": timeMin,
@@ -45,7 +47,6 @@ function registerTaskInCalendar(timeMax, timeMin, requiredTime, title, routine) 
       "items": [{"id": "primary"}],
       "timeZone": "Asia/Tokyo"
     });
-
     request.execute(function(resp) {
       console.log(resp);
       console.log(startingTime);
@@ -64,6 +65,7 @@ function registerTaskInCalendar(timeMax, timeMin, requiredTime, title, routine) 
       if (typeof errors == "undefined") {
         console.log("come");
         if (events.length == 0) {
+          var currentTime = new Date();
           var workStartingTime = new Date(currentTime.toLocaleDateString() + startingTime);
           var workEndingTime =  new Date(currentTime.toLocaleDateString() + endingTime);
           if (currentTime >= workStartingTime && currentTime <= workEndingTime) {
@@ -76,7 +78,9 @@ function registerTaskInCalendar(timeMax, timeMin, requiredTime, title, routine) 
               taskStartingTime = new Date(new Date(currentTime.setDate(currentTime.getDate())).toLocaleDateString() + startingTime);
             } else {
               console.log("evening and do it tomorrow");
+              console.log(currentTime);
               taskStartingTime = new Date(new Date(currentTime.setDate(currentTime.getDate() + 1)).toLocaleDateString() + startingTime);
+              console.log(taskStartingTime);
             }
           }
           createEvents(title, taskStartingTime, requiredTime, routine).then(function(result){
@@ -190,7 +194,7 @@ function isThereEnoughTime(eStartingTime, eEndingTime, wStartingTime, wEndingTim
 }
 
 function createEvents(title, startingTime, requiredTime, routine) {
-  console.log(routine);
+  console.log(startingTime);
   return new Promise(function (resolve, reject) {
     var endingTime = (new Date(startingTime.getTime() + (requiredTime * 60000))).toISOString();
     console.log(startingTime + "," + endingTime);
@@ -239,70 +243,104 @@ function deleteEvent(eventId) {
   })
 }
 
-var lastTimeParams = {};
+function fetchList(parameters) {
+  return new Promise(function (resolve, reject) {
+    if (nextPageToken != null) {
+      parameters.pageToken = nextPageToken;
+      console.log("pageToken is set");
+      console.log(parameters);
+    } else
+    if (nextSyncToken != null) {
+      console.log("syncToken is set");
+      parameters.syncToken = nextSyncToken;
+    }
+    if (!gapi.client.calendar) {
+      console.log("not ready");
+      reject();
+    } else {
+      var request = gapi.client.calendar.events.list(parameters);
+      request.execute(function(resp) {
+        if (resp.nextPageToken) {
+          nextPageToken = resp.nextPageToken;
+          console.log("set pagetoken");
+        } else {
+          nextPageToken = null;
+        }
+        console.log("next syncToken is... ");
+        if (resp.nextSyncToken) {
+          console.log("syncToken is set");
+          nextSyncToken = resp.nextSyncToken;
+        }
+        var events = resp.items;
+        if (events.length > 0) {
+          for (i = 0; i < events.length; i++) {
+            var event = events[i];
+            if (event.status === "cancelled") {
+              var id = event.id;
+              deleteList.push(id);
+            } else {
+              var item = {};
+              var allday = false;
+              var when = event.start.dateTime;
+              if (!when) {
+                when = event.start.date;
+                allday = true;
+              }
+              item.start = when;
+              if (!allday) {
+                item.end = event.end.dateTime;
+              }
+              item.title = event.summary;
+              item.id = event.id;
+              eventList.push(item);
+            }
+          }
+        }
+        var result = {
+          list: [eventList, deleteList],
+          token: nextPageToken
+        }
+        resolve(result);
+      });
+    }
+  });
+}
+
+function promiseLoop(fn, parameters) {
+  return new Promise(function(resolve, reject){
+    (function loop (fn, parameters) {
+        return fn(parameters)
+          .then(function(result) {
+            if (result.token != null) {
+              loop(fn, parameters);
+            } else {
+              resolve(result.list);
+            }
+          })
+          .catch(function() {
+            reject();
+          })
+      })(fn, parameters);
+  })
+}
 
 function listUpcomingEvents() {
   return new Promise(function (resolve, reject) {
-    var params = {};
+    eventList = [];
+    deleteList = [];
     var parameters = {
        'calendarId': 'primary',
-       'timeMin': min,
-       'showDeleted': false,
-       'singleEvents': true,
-       'orderBy': 'startTime'
+       'singleEvents': true
     };
-    // params = parameters;
-    // if (nextPageToken != null) {
-    //   lastTimeParams.pageToken = nextPageToken;
-    //   params = lastTimeParams;
-    //   console.log("pageToken is set");
-    //   console.log(parameters);
-    // } else if (nextSyncToken != null) {
-    //   lastTimeParams.syncToken = nextSyncToken;
-    //   params = lastTimeParams;
-    // }
-    var request = gapi.client.calendar.events.list(parameters);
-    lastTimeParams = parameters;
-    request.execute(function(resp) {
-      var eventList = [];
-      console.log(resp);
-      console.log(resp.nextPageToken);
-      if (resp.nextPageToken) {
-        nextPageToken = resp.nextPageToken;
-        console.log("set pagetoken");
-      } else if (nextPageToken != null) {
-        nextPageToken = null;
-      }
-      if (resp.syncToken) {
-        console.log("syncToken is set");
-        nextSyncToken = resp.syncToken;
-      } else if (nextSyncToken != null) {
-        nextSyncToken = null;
-      }
-      var events = resp.items;
-      console.log(events);
-      if (events.length > 0) {
-        for (i = 0; i < events.length; i++) {
-          var item = {};
-          var allday = false;
-          var event = events[i];
-          var when = event.start.dateTime;
-          if (!when) {
-            when = event.start.date;
-            allday = true;
-          }
-          item.start = when;
-          console.log(when);
-          if (!allday) {
-            item.end = event.end.dateTime;
-          }
-          item.title = event.summary;
-          item.id = event.id;
-          eventList.push(item);
-        }
-      }
-      resolve(eventList);
-    });
+    promiseLoop(fetchList, parameters)
+      .then(function(list){
+        console.log("done");
+        console.log(nextSyncToken);
+        resolve(list);
+      })
+      .catch(function(){
+        reject();
+      })
   });
 }
 

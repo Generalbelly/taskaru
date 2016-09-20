@@ -45,35 +45,41 @@
       };
 
       function createCalendar(firsttime) {
+        console.log("argument" + firsttime);
         listUpcomingEvents()
           .then(function(list){
             console.log("new events");
-            if (list.length > 0) {
-              if (firsttime) {
-                setEventsInFullCalendar(list);
-              } else {
-                updateFullCalendar(list)
-              }
+            if (firsttime) {
+              setEventsInFullCalendar(list);
+            } else {
+              updateFullCalendar(list)
             }
           })
           .catch(function(e){
             console.log("あーあ");
-            checkAuth().then(function(result){
-              listUpcomingEvents()
-              .then(function(list){
-                console.log("success");
-                if (list.length > 0) {
-                  if (firsttime) {
-                    setEventsInFullCalendar(list);
-                  } else {
-                    updateFullCalendar(list)
-                  }
-                }
+            checkAuth()
+              .then(function(result){
+                listUpcomingEvents()
+                  .then(function(list){
+                    console.log("success");
+                    if (firsttime) {
+                      setEventsInFullCalendar(list);
+                    } else {
+                      updateFullCalendar(list)
+                    }
+                  })
+                  .catch(function(e){
+                    console.log("errrr" + e);
+                  })
               })
               .catch(function(e){
-                console.log("errrr" + e);
+                if (e=="notReady") {
+                  console.log("not ready だったよ");
+                  setTimeout(function() {
+                    createCalendar(true);
+                  }, 1000)
+                }
               })
-            });
           })
       }
 
@@ -98,7 +104,7 @@
           navLinks: true, // can click day/week names to navigate views
 			    editable: true,
           events: {
-            events: list
+            events: list[0]
           },
           eventDrop: eventChanged,
           eventResize: eventChanged
@@ -106,9 +112,21 @@
       }
 
       function updateFullCalendar(list) {
-        console.log("updated");
-        $("#calendar").fullCalendar('removeEventSources');
-        $("#calendar").fullCalendar("addEventSource", list);
+        if (list[0].length > 0) {
+          $("#calendar").fullCalendar("addEventSource", list[0]);
+        }
+        if (list[1].length > 0) {
+          console.log("delete needed");
+          console.log(list[1]);
+          for (var i = 0; i < list[1].length; i++){
+            console.log(list[1][i]);
+            removeEvents(list[1][i]);
+          }
+        }
+      }
+
+      function removeEvents(id) {
+        $("#calendar").fullCalendar("removeEvents", id);
       }
 
       function eventChanged(event) {
@@ -305,7 +323,11 @@
         $mdDialog.show(confirm).then(function(result) {
           taskList.$remove(item).then(function(ref) {
             console.log("DELETED");
-            deleteEvent(item.calendarId);
+            var evId = item.calendarId;
+            deleteEvent(evId)
+              .then(function(){
+                removeEvents(evId);
+              })
           });
         }, function() {
           console.log("you cancelled");
@@ -331,20 +353,33 @@
         var recurrence = false;
         var taskList = $scope.taskList;
         if ($scope.selectedTaskname === null) {
-          openMessageModal("未入力の項目があります", "タスクが入力されていません。");
-          return;
-        } else if ($scope.selectedProject === null) {
-          openMessageModal("未入力の項目があります", "プロジェクトが入力されていません。");
-          return;
-        } else if ($scope.estimated_time === null){
+          if ($scope.tSearchText != null) {
+            console.log("you are not smart");
+            $scope.selectedTaskname = $scope.tSearchText;
+          } else {
+            openMessageModal("未入力の項目があります", "タスクが入力されていません。");
+            return;
+          }
+        }
+        if ($scope.selectedProject === null) {
+          if ($scope.pSearchText != null) {
+            console.log("you are not smart2");
+            $scope.selectedProject = $scope.pSearchText;
+          } else {
+            openMessageModal("未入力の項目があります", "プロジェクトが入力されていません。");
+            return;
+          }
+        }
+        if ($scope.estimated_time === null) {
           openMessageModal("未入力の項目があります", "想定時間が入力されていません。");
           return;
-        } else if ($scope.deadline === null ) {
+        }
+        if ($scope.deadline === null ) {
           openMessageModal("未入力の項目があります", "期日が入力されていません。");
           return;
         }
-        if ($scope.priority === null ){
-          taskData.priority = "middle"
+        if ($scope.priority === null ) {
+          $scope.priority = "middle"
         }
         var taskData = {
           "taskname": $scope.selectedTaskname,

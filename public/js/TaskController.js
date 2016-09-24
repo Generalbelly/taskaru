@@ -100,7 +100,7 @@
             right: "month,agendaWeek,agendaDay,listWeek refreshButton"
           },
           firstDay: 1,
-          defaultView: "agendaWeek",
+          defaultView: "agendaDay",
           navLinks: true, // can click day/week names to navigate views
 			    editable: true,
           events: {

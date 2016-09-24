@@ -70,12 +70,12 @@ md-datepicker {
   padding-right: 7px;
 }
 
-.estimatedTimeError {
-  margin-top: -41px;
-}
-
 md-divider {
   padding: 10px 0;
+}
+
+.taskCell > span {
+  font-size: 0.8em;
 }
 
 /* To hide google popup */

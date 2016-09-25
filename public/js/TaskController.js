@@ -370,16 +370,15 @@
             return;
           }
         }
-        if ($scope.estimated_time === null) {
-          openMessageModal("未入力の項目があります", "想定時間が入力されていません。");
-          return;
-        }
         if ($scope.deadline === null ) {
           openMessageModal("未入力の項目があります", "期日が入力されていません。");
           return;
         }
+        if ($scope.estimated_time === null) {
+          $scope.estimated_time = 30;
+        }
         if ($scope.priority === null ) {
-          $scope.priority = "middle"
+          $scope.priority = "middle";
         }
         var taskData = {
           "taskname": $scope.selectedTaskname,

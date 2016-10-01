@@ -94,12 +94,16 @@ function registerTaskInCalendar(timeMax, timeMin, requiredTime, title, routine) 
             if (!loopAgain) {
               eEndingTime = new Date(event.end);
             }
+            console.log("eventStartingTime is ..." + eStartingTime);
             console.log("eventEndingTime is ..." + eEndingTime);
             eStartingTimeString = eStartingTime.toLocaleDateString();
             eEndingTimeString = eEndingTime.toLocaleDateString();
             if (lastCheckedDate === null || lastCheckedDate !== eStartingTimeString) {
               console.log(lastCheckedDate + " is not equal to " + eStartingTimeString);
               wStartingTime = new Date(eStartingTimeString + startingTime);
+              if (wStartingTime.getTime() > (new Date()).getTime()) {
+                wStartingTime = new Date();
+              }
               wEndingTime = new Date(eEndingTimeString + endingTime);
               lastCheckedDate = eStartingTimeString;
             }
@@ -120,9 +124,16 @@ function registerTaskInCalendar(timeMax, timeMin, requiredTime, title, routine) 
             timeDiff = (wEndingTime - eEndingTime) / (1000 * 60);
             console.log(wEndingTime);
             console.log(eEndingTime);
-            if (timeDiff >= requiredTime) {
+            console.log("timeDiff is ..." + timeDiff);
+            if (timeDiff >= requiredTime && wEndingTime > eEndingTime) {
               freeTimeFound = true;
-              taskStartingTime = eEndingTime;
+              var nextDayStartingTime = new Date(eEndingTime.toLocaleDateString() + startingTime);
+              console.log(nextDayStartingTime);
+              if (eEndingTime.getTime() <= nextDayStartingTime.getTime()) {
+                taskStartingTime = nextDayStartingTime;
+              } else {
+                taskStartingTime = eEndingTime;
+              }
               console.log("finally found free time!");
               console.log("You will work on the task from " + taskStartingTime);
               createEvents(title, taskStartingTime, requiredTime, routine).then(function(result){
@@ -131,10 +142,13 @@ function registerTaskInCalendar(timeMax, timeMin, requiredTime, title, routine) 
             } else {
               console.log("Sorry, you are too busy...");
               console.log("timeMax:" + timeMax);
-              var deadline = new Date(timeMax).toLocaleDateString();
-              if (eEndingTime < deadline) {
-                taskStartingTime = new Date(new Date(eEndingTime.setDate(eEndingTime.getDate())).toLocaleDateString() + startingTime);
-                console.log("Wait, you still have time.");
+              var deadline = new Date(timeMax);
+              if (eEndingTime.getTime() < deadline.getTime()) {
+                var n = 0;
+                if (eEndingTime.getTime() >= wEndingTime.getTime()) {
+                  n = 1;
+                }
+                taskStartingTime = new Date(new Date(eEndingTime.setDate(eEndingTime.getDate() + n)).toLocaleDateString() + startingTime);
                 createEvents(title, taskStartingTime, requiredTime, routine).then(function(result){
                   resolve(result);
                 });
@@ -156,39 +170,44 @@ function registerTaskInCalendar(timeMax, timeMin, requiredTime, title, routine) 
 }
 
 function isThereEnoughTime(eStartingTime, eEndingTime, wStartingTime, wEndingTime, requiredTime) {
-  if (eStartingTime < wStartingTime) {
+  console.log("eStartingTime " + eStartingTime);
+  console.log("eEndingTime " + eEndingTime);
+  console.log("wStartingTime " + wStartingTime);
+  console.log("wEndingTime " + wEndingTime);
+  console.log("requiredTime " + requiredTime);
+  var eStartingTime = eStartingTime.getTime();
+  var eEndingTime = eEndingTime.getTime();
+  var wStartingTime = wStartingTime.getTime();
+  var wEndingTime = wEndingTime.getTime();
+
+  if (eEndingTime <= wEndingTime) {
+    console.log("bye");
+    return false
+  } else if (eStartingTime < wStartingTime) {
     console.log("The event is outside working hours");
     if (eEndingTime < wStartingTime) {
       console.log("The next event doesn't start even after this event is done.");
-      console.log(eStartingTime + ", " + wStartingTime);
       return false;
     } else {
       console.log("The next event overwraps with this event.");
-      console.log(eStartingTime + ", " + wStartingTime);
       return false;
     }
   } else if (eStartingTime >= wEndingTime) {
     console.log("The event is outside working hours");
-    console.log(eStartingTime + ", " + wStartingTime);
     return false;
   } else if (eStartingTime < wEndingTime && eStartingTime > wStartingTime ) {
     console.log("The event is within working hours");
-    console.log(eStartingTime + ", " + wStartingTime);
     var timeDiff = (eStartingTime - wStartingTime) / (1000 * 60);
-    console.log("Time difference is ..." + timeDiff);
-    console.log("requiredTime is ..." + requiredTime);
-    if (timeDiff >= requiredTime && (new Date().getTime()) - eStartingTime.getTime() < 0) {
+    if (timeDiff >= requiredTime && ((new Date().getTime()) - eStartingTime) < 0) {
       return true;
     } else {
       return false;
     }
-  } else if (eStartingTime.getTime() == wStartingTime.getTime()) {
+  } else if (eStartingTime == wStartingTime) {
     console.log("The event is within working hours but it starts from 9:30");
-    console.log(eStartingTime + ", " + wStartingTime);
     return false;
   } else {
     console.log("unexpected thing happened.");
-    console.log(eStartingTime + ", " + wStartingTime);
     return false;
   }
 }
